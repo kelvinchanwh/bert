@@ -112,10 +112,13 @@ This is a large dataset, so this will training will take a few hours on a GPU
 debugging, just set `num_train_epochs` to a small value like `0.1`.
 
 ```shell
-export BERT_BASE_DIR=/path/to/bert/chinese_L-12_H-768_A-12 # or multilingual_L-12_H-768_A-12
-export XNLI_DIR=/path/to/xnli
+export BERT_BASE_DIR=/Users/kelvinchanwh/Downloads/multi_cased_L-12_H-768_A-12
+export XNLI_DIR=/Users/kelvinchanwh/Documents/GitHub/FYP2/bert/XNLI_Dataset
+export TPU_NAME=grpc://
 
 python run_classifier.py \
+  --use_tpu=True \
+  --tpu_name=$TPU_NAME\
   --task_name=XNLI \
   --do_train=true \
   --do_eval=true \
