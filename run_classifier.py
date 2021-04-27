@@ -208,7 +208,7 @@ class XnliProcessor(DataProcessor):
   """Processor for the XNLI data set."""
 
   def __init__(self):
-    self.language = "zh"
+    self.language = "en"
 
   def get_train_examples(self, data_dir):
     """See base class."""
@@ -227,6 +227,7 @@ class XnliProcessor(DataProcessor):
         label = tokenization.convert_to_unicode("contradiction")
       examples.append(
           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+    print (examples)
     return examples
 
   def get_dev_examples(self, data_dir):
