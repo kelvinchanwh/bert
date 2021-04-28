@@ -26,6 +26,13 @@ import optimization
 import tokenization
 import tensorflow as tf
 
+import util.tool
+import util.data
+import util.convert
+
+import random
+from svo_extraction.subject_verb_object_extract import findSVOs, get_spacy_nlp_sm_model, invertSentence
+
 flags = tf.flags
 
 FLAGS = flags.FLAGS
@@ -123,6 +130,18 @@ flags.DEFINE_integer(
     "num_tpu_cores", 8,
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 
+flags.DEFINE_float(
+    "cross", 1,
+    "word cross Ratio")
+
+flags.DEFINE_float(
+    "ratio", 1,
+    "sentence selection ratio")
+
+flags.DEFINE_float(
+    "invratio", 1,
+    "Sentence inversion ratio")
+
 
 class InputExample(object):
   """A single training/test example for simple sequence classification."""
@@ -209,6 +228,55 @@ class XnliProcessor(DataProcessor):
 
   def __init__(self):
     self.language = "en"
+    self.training = True
+    self.dict_list_val = ['./dataset/Panlex/dict/zh2.txt', './dataset/Panlex/dict/es2.txt']
+
+    idx_dict = util.convert.Common.to_args({"src2tgt": []})
+    for dict_file in self.dict_list_val:
+        self.get_idx_dict(idx_dict, dict_file, None)
+
+    self.worddict = idx_dict
+
+  def get_idx_dict(self, idx_dict, file, args):
+    raw = util.data.Delexicalizer.remove_linefeed(util.data.Reader.read_raw(file))
+    idx_dict.src2tgt.append({})
+    for line in raw:
+        try:
+            src, tgt = line.split("\t")
+        except:
+            src, tgt = line.split(" ")
+        
+        if src not in idx_dict.src2tgt[-1]:
+            idx_dict.src2tgt[-1][src] = [tgt]
+        else:
+            idx_dict.src2tgt[-1][src].append(tgt)
+
+  def cross(self, x, disable=False):
+    if not disable and self.training and (FLAGS.cross >= random.random()):
+        lan = random.randint(0,len(self.dict_list_val) - 1)
+        if x in self.worddict.src2tgt[lan]:
+            return self.worddict.src2tgt[lan][x][random.randint(0,len(self.worddict.src2tgt[lan][x]) - 1)]
+        else:
+            return x
+    else:
+        return x
+
+  def cross_str(self, x, disable=False):
+      raw = x.lower().split(" ")
+      out = ""
+      for xx in raw:
+          out += self.cross(xx, disable)
+          out += " "
+      #print(out)
+      return out
+
+  def invert_str(self, x, disable=False):
+      return invertSentence(x)
+
+  def cross_list(self, x):
+      # TO ADD ARG FOR RATIO
+      tmp = [self.invert_str(xx, not (self.training and FLAGS.invratio >= random.random())) for xx in x]
+      return [self.cross_str(xx, not (self.training and FLAGS.ratio >= random.random())) for xx in tmp]
 
   def get_train_examples(self, data_dir):
     """See base class."""
@@ -225,6 +293,7 @@ class XnliProcessor(DataProcessor):
       label = tokenization.convert_to_unicode(line[2])
       if label == tokenization.convert_to_unicode("contradictory"):
         label = tokenization.convert_to_unicode("contradiction")
+      text_a, text_b = self.cross_list([text_a, text_b])
       examples.append(
           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
     print (examples)
