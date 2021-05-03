@@ -284,6 +284,11 @@ class XnliProcessor(DataProcessor):
         os.path.join(data_dir, "multinli",
                      "multinli.train.%s.tsv" % self.language))
     examples = []
+    guid_list = []
+    text_a_list = []
+    text_b_list = []
+    label_list = []
+
     for (i, line) in enumerate(lines):
       if i == 0:
         continue
@@ -293,9 +298,15 @@ class XnliProcessor(DataProcessor):
       label = tokenization.convert_to_unicode(line[2])
       if label == tokenization.convert_to_unicode("contradictory"):
         label = tokenization.convert_to_unicode("contradiction")
-      text_a, text_b = self.cross_list([text_a, text_b])
+      guid_list.extend(guid)
+      text_a_list.extend(text_a)
+      text_b_list.extend(text_b)
+      label_list.extend(label)
+    text_a = self.cross_list(text_a)
+    text_b = self.cross_list(text_b)
+    for i in range(len(text_a)):
       examples.append(
-          InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+          InputExample(guid=guid_list[i], text_a=text_a_list[i], text_b=text_b_list[i], label=label_list[i]))
     print (examples)
     return examples
 
