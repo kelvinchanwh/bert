@@ -302,12 +302,11 @@ class XnliProcessor(DataProcessor):
       text_a_list.extend(text_a)
       text_b_list.extend(text_b)
       label_list.extend(label)
-    text_a = self.cross_list(text_a)
-    text_b = self.cross_list(text_b)
+    text_a_list = self.cross_list(text_a_list)
+    text_b_list = self.cross_list(text_b_list)
     for i in range(len(text_a)):
       examples.append(
           InputExample(guid=guid_list[i], text_a=text_a_list[i], text_b=text_b_list[i], label=label_list[i]))
-    print (examples)
     return examples
 
   def get_dev_examples(self, data_dir):
